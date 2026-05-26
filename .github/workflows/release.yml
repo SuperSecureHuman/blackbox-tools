@@ -38,7 +38,7 @@ jobs:
             make_args: DEBUG=RELEASE DEBUG_FLAGS="" ARCH_FLAGS="-mcpu=apple-m1"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
@@ -65,7 +65,7 @@ jobs:
           cp obj/encoder_testbed  dist/encoder_testbed-${{ matrix.name }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: blackbox-tools-${{ matrix.name }}
           path: dist/
@@ -79,7 +79,7 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: release-artifacts
           merge-multiple: true
