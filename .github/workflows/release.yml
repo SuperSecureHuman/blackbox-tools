@@ -42,6 +42,10 @@ jobs:
             os: macos-15
             make_args: DEBUG=RELEASE DEBUG_FLAGS="" ARCH_FLAGS="-mcpu=apple-m1"
 
+          - name: windows-x86_64
+            os: windows-latest
+            make_args: DEBUG=RELEASE DEBUG_FLAGS=""
+
     steps:
       - uses: actions/checkout@v6
         with:
@@ -59,16 +63,46 @@ jobs:
         run: |
           brew install pkg-config freetype cairo
 
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: >-
+            make
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-cairo
+            mingw-w64-x86_64-freetype
+
       - name: Build
+        if: runner.os != 'Windows'
+        run: make all ${{ matrix.make_args }}
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
         run: make all ${{ matrix.make_args }}
 
       - name: Strip and package binaries
+        if: runner.os != 'Windows'
         run: |
           strip obj/blackbox_decode obj/blackbox_render obj/encoder_testbed
           mkdir -p dist
           cp obj/blackbox_decode  dist/blackbox_decode-${{ matrix.name }}
           cp obj/blackbox_render  dist/blackbox_render-${{ matrix.name }}
           cp obj/encoder_testbed  dist/encoder_testbed-${{ matrix.name }}
+
+      - name: Strip and package binaries (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          strip obj/blackbox_decode.exe obj/blackbox_render.exe obj/encoder_testbed.exe
+          mkdir -p dist
+          cp obj/blackbox_decode.exe  dist/blackbox_decode-${{ matrix.name }}.exe
+          cp obj/blackbox_render.exe  dist/blackbox_render-${{ matrix.name }}.exe
+          cp obj/encoder_testbed.exe  dist/encoder_testbed-${{ matrix.name }}.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
